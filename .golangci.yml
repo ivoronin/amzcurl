@@ -1,0 +1,12 @@
+linters:
+  enable-all: true
+  disable:
+    - gomnd
+    - wrapcheck
+    - exhaustruct
+    - depguard
+    # Deprecated:
+    - perfsprint
+    - gochecknoglobals
+    - execinquery
+    - exportloopref
