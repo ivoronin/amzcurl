@@ -14,8 +14,8 @@ It allows you to use `curl` as-is to make signed requests to AWS APIs with minim
 ## 🧩 What It Does
 
 - 🔍 **Discovers AWS credentials** from your environment (`~/.aws/config`, env vars, EC2/ECS/IAM, etc.)
+- 🔎 **Auto-detects the AWS service name and region** based on the request URL (optional override)
 - 🪪 **Injects SigV4 signing flags** into `curl` using `--aws-sigv4` and temporary credentials
-- 🔎 **Auto-detects the AWS service name** based on the request URL (optional override)
 - ✅ **Passes everything else to `curl` untouched**
 
 That's it.
