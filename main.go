@@ -6,52 +6,17 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
+var ErrMissingArgumentValue = errors.New("missing argument value")
+
 func fatalf(format string, args ...interface{}) int {
 	fmt.Fprintf(os.Stderr, "amzcurl: "+format+"\n", args...)
 
 	return 1
-}
-
-func mustArg(name string, args *[]string, idx *int) string {
-	*idx++
-	if *idx >= len(*args) {
-		fatalf("missing value for %s", name)
-	}
-
-	return (*args)[*idx]
-}
-
-func parseFlags(args []string) (profile, region, service string, curlArgs []string) { //nolint:nonamedreturns
-	serviceOverride := ""
-
-	for idx := 0; idx < len(args); idx++ { //nolint:intrange
-		if strings.HasPrefix(args[idx], "https://") || strings.HasPrefix(args[idx], "http://") {
-			service = guessService(args[idx])
-		}
-
-		switch args[idx] {
-		case "--profile":
-			profile = mustArg("--profile", &args, &idx)
-		case "--region":
-			region = mustArg("--region", &args, &idx)
-		case "--service":
-			serviceOverride = mustArg("--service", &args, &idx)
-		default:
-			curlArgs = append(curlArgs, args[idx])
-		}
-	}
-
-	if serviceOverride != "" {
-		service = serviceOverride
-	}
-
-	return
 }
 
 func buildCurlConfig(cfg aws.Config, regionOverride, service string) ([]string, error) {
@@ -78,7 +43,11 @@ func buildCurlConfig(cfg aws.Config, regionOverride, service string) ([]string, 
 }
 
 func amzcurl() int {
-	profile, region, service, curlArgs := parseFlags(os.Args[1:])
+	profile, region, service, curlArgs, err := parseFlags(os.Args[1:])
+	if err != nil {
+		return fatalf("failed to parse flags: %v", err)
+	}
+
 	if service == "" {
 		return fatalf("--service is required")
 	}
