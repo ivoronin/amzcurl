@@ -28,7 +28,6 @@ var endpointPatterns = []*regexp.Regexp{
 
 	// Well, some endpoints do not fit into standard patterns
 	regexp.MustCompile(`^(?P<service>s3)\.amazonaws\.com?$`),
-	regexp.MustCompile(`^(?P<service>s3)\.(?P<region>[a-z0-9-]+)\.amazonaws\.com(\.cn)?$`),
 	regexp.MustCompile(`^[a-z0-9-]+\.(?P<service>s3)\.(?P<region>[a-z0-9-]+)\.amazonaws\.com(\.cn)?$`),
 
 	regexp.MustCompile(`^[a-z0-9-]+\.(?P<region>[a-z0-9-]+)\.(?P<service>es)\.amazonaws\.com(\.cn)?$`),
