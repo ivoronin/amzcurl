@@ -15,7 +15,7 @@ func TestGuessServiceAndRegion(t *testing.T) {
 		// Standard endpoints
 		{"https://s3.us-west-2.amazonaws.com", "s3", "us-west-2"},
 		{"https://ec2.eu-central-1.amazonaws.com", "ec2", "eu-central-1"},
-		{"https://s3.amazonaws.com", "s3", ""},
+		{"https://s3.amazonaws.com", "s3", "us-east-1"},
 
 		// Dualstack endpoints
 		{"https://s3.dualstack.eu-west-1.amazonaws.com", "s3", "eu-west-1"},
@@ -31,7 +31,7 @@ func TestGuessServiceAndRegion(t *testing.T) {
 		{"https://search-mydomain.us-east-1.es.amazonaws.com", "es", "us-east-1"},
 
 		// Legacy and corner-case patterns
-		{"s3.amazonaws.com", "s3", ""},
+		{"s3.amazonaws.com", "s3", "us-east-1"},
 		{"s3.us-east-1.amazonaws.com", "s3", "us-east-1"},
 		{"mybucket.s3.us-west-2.amazonaws.com", "s3", "us-west-2"},
 

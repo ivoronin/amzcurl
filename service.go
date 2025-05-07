@@ -61,5 +61,10 @@ func guessServiceAndRegion(rawURL string) (service, region string) { //nolint: n
 		}
 	}
 
+	// Legacy global endpoint
+	if service == "s3" && region == "" {
+		region = "us-east-1"
+	}
+
 	return
 }
