@@ -11,7 +11,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-var ErrMissingArgumentValue = errors.New("missing argument value")
+var (
+	version                  = "dev"
+	ErrMissingArgumentValue = errors.New("missing argument value")
+)
 
 func fatalf(format string, args ...interface{}) int {
 	fmt.Fprintf(os.Stderr, "amzcurl: "+format+"\n", args...)
@@ -43,6 +46,11 @@ func buildCurlConfig(cfg aws.Config, regionOverride, service string) ([]string, 
 }
 
 func amzcurl() int {
+	if len(os.Args) > 1 && os.Args[1] == "--version" {
+		fmt.Println(version)
+		return 0
+	}
+
 	profile, region, service, curlArgs, err := parseFlags(os.Args[1:])
 	if err != nil {
 		return fatalf("failed to parse flags: %v", err)

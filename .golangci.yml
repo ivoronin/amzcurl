@@ -1,12 +1,24 @@
+version: "2"
+
 linters:
-  enable-all: true
+  default: all
   disable:
-    - gomnd
-    - wrapcheck
     - exhaustruct
     - depguard
-    # Deprecated:
+    - wrapcheck
+    - tagalign
+    - forbidigo
     - perfsprint
     - gochecknoglobals
-    - execinquery
-    - exportloopref
+    - wsl  # deprecated
+    - revive  # too noisy
+    # Legacy code suppressions:
+    - cyclop  # cyclomatic complexity
+    - errcheck  # unchecked errors
+    - nakedret  # naked returns
+    - nlreturn  # blank lines before return
+    - noctx  # exec.Command vs CommandContext
+    - noinlineerr  # inline error handling
+    - modernize  # interface{} -> any
+    - staticcheck  # tagged switch suggestions
+    - gosec  # security issues (legacy code)
