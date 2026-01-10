@@ -44,12 +44,6 @@ Download from [Releases](https://github.com/ivoronin/amzcurl/releases).
 brew install ivoronin/tap/amzcurl
 ```
 
-### Go Install
-
-```bash
-go install github.com/ivoronin/amzcurl/cmd/amzcurl@latest
-```
-
 ### Build from Source
 
 ```bash
