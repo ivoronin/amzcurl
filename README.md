@@ -1,63 +1,135 @@
 # amzcurl
-![GitHub release (with filter)](https://img.shields.io/github/v/release/ivoronin/amzcurl)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ivoronin/amzcurl)](https://goreportcard.com/report/github.com/ivoronin/amzcurl)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/ivoronin/amzcurl/main)
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/ivoronin/amzcurl/goreleaser.yml)
-![GitHub top language](https://img.shields.io/github/languages/top/ivoronin/amzcurl)
 
-**`amzcurl`** is the thinnest possible wrapper around [`curl`](https://curl.se/), designed to transparently inject AWS SigV4 authentication using credentials discovered via the [AWS SDK for Go v2](https://github.com/aws/aws-sdk-go-v2).
+Curl wrapper that injects AWS SigV4 authentication using credentials from the AWS SDK credential chain
 
-It allows you to use `curl` as-is to make signed requests to AWS APIs with minimal friction.
+[![CI](https://github.com/ivoronin/amzcurl/actions/workflows/test.yml/badge.svg)](https://github.com/ivoronin/amzcurl/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/ivoronin/amzcurl)](https://github.com/ivoronin/amzcurl/releases)
 
-> You’ll need at least curl version 8.5 for everything to work properly - the newer, the better, as many issues with AWS SigV4 have been fixed in recent releases.
+[Overview](#overview) · [Features](#features) · [Installation](#installation) · [Usage](#usage) · [Configuration](#configuration) · [Requirements](#requirements) · [License](#license)
 
-## 🧩 What It Does
+```bash
+# Before: manually constructing SigV4 with curl
+curl --aws-sigv4 "aws:amz:us-west-2:s3" \
+  --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
+  -H "x-amz-security-token: $AWS_SESSION_TOKEN" \
+  https://my-bucket.s3.us-west-2.amazonaws.com/file.txt
 
-- 🔍 **Discovers AWS credentials** from your environment (`~/.aws/config`, env vars, EC2/ECS/IAM, etc.)
-- 🔎 **Auto-detects the AWS service name and region** based on the request URL (optional override)
-- 🪪 **Injects SigV4 signing flags** into `curl` using `--aws-sigv4` and temporary credentials
-- ✅ **Passes everything else to `curl` untouched**
+# After: credentials and signing handled automatically
+amzcurl https://my-bucket.s3.us-west-2.amazonaws.com/file.txt
+```
 
-That's it.
+## Overview
 
-No extra abstractions. Just automatic AWS signing.
+amzcurl discovers AWS credentials using the AWS SDK for Go v2 credential chain (environment variables, shared credentials file, EC2/ECS instance metadata). It parses the request URL to detect the AWS service and region, then passes signing flags (`--aws-sigv4`, `--user`, session token header) to curl via a temporary config file. All other arguments pass through to curl unchanged.
 
-## 📦 Installation
+## Features
 
-### Download
+- Discovers credentials from full AWS SDK chain (env vars, `~/.aws/credentials`, `~/.aws/config`, EC2/ECS IMDS, SSO)
+- Auto-detects service name and region from standard AWS endpoint URLs
+- Supports named profiles via `--profile`
+- Supports manual region and service override via `--region` and `--service`
+- Handles session tokens for temporary credentials (IAM roles, SSO)
+- Supports standard, dual-stack, FIPS, and Chinese region endpoints
+- All curl arguments pass through unchanged
 
-https://github.com/ivoronin/amzcurl/releases
+## Installation
 
-### Build from source
+### GitHub Releases
+
+Download from [Releases](https://github.com/ivoronin/amzcurl/releases).
+
+### Homebrew
+
+```bash
+brew install ivoronin/tap/amzcurl
+```
+
+### Build from Source
 
 ```bash
 git clone https://github.com/ivoronin/amzcurl.git
 cd amzcurl
-go build -o amzcurl
+go build -o amzcurl ./cmd/amzcurl
 ```
 
-### Or install via go install
+## Usage
 
 ```
-go install github.com/ivoronin/amzcurl@latest
+amzcurl [--profile PROFILE] [--region REGION] [--service SERVICE] [curl args...]
 ```
 
-## 🚀 Usage
+### S3
 
+```bash
+# List bucket contents
+amzcurl https://my-bucket.s3.us-west-2.amazonaws.com/
+
+# Download file
+amzcurl -o file.txt https://my-bucket.s3.us-west-2.amazonaws.com/file.txt
+
+# Upload file
+amzcurl -X PUT -T file.txt https://my-bucket.s3.us-west-2.amazonaws.com/file.txt
 ```
-amzcurl [--profile PROFILE] [--region REGION] [--service SERVICE] <curl args...>
-```
 
-### Examples
+### DynamoDB
 
-```
-# Auto-detect service from URL (S3)
-amzcurl https://my-bucket.s3.amazonaws.com/file.txt
-
-# Explicit service and region
-amzcurl --service dynamodb --region us-west-2 \
-  -X POST https://dynamodb.us-west-2.amazonaws.com/ \
+```bash
+amzcurl -X POST https://dynamodb.us-west-2.amazonaws.com/ \
   -H "Content-Type: application/x-amz-json-1.0" \
   -H "X-Amz-Target: DynamoDB_20120810.ListTables" \
   -d '{}'
 ```
+
+### Named Profile
+
+```bash
+amzcurl --profile production https://my-bucket.s3.us-west-2.amazonaws.com/
+```
+
+### Explicit Region and Service
+
+For non-standard endpoints or when auto-detection fails:
+
+```bash
+amzcurl --service execute-api --region us-east-1 \
+  https://abc123.execute-api.us-east-1.amazonaws.com/prod/resource
+```
+
+### Version
+
+```bash
+amzcurl --version
+```
+
+## Configuration
+
+amzcurl uses the AWS SDK for Go v2 default credential chain. No tool-specific configuration is needed.
+
+### Credential Chain Order
+
+1. Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`)
+2. Shared credentials file (`~/.aws/credentials`)
+3. Shared config file (`~/.aws/config`) with profile support
+4. EC2/ECS instance metadata service (IMDS)
+5. SSO credentials when configured
+
+### AWS Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `AWS_ACCESS_KEY_ID` | Access key ID |
+| `AWS_SECRET_ACCESS_KEY` | Secret access key |
+| `AWS_SESSION_TOKEN` | Session token for temporary credentials |
+| `AWS_PROFILE` | Named profile to use |
+| `AWS_REGION` | Default region |
+| `AWS_CONFIG_FILE` | Path to config file (default: `~/.aws/config`) |
+| `AWS_SHARED_CREDENTIALS_FILE` | Path to credentials file (default: `~/.aws/credentials`) |
+
+## Requirements
+
+- curl 8.5 or newer (required for `--aws-sigv4` flag; newer versions recommended as SigV4 bugs have been fixed in recent releases)
+- Valid AWS credentials accessible via the SDK credential chain
+
+## License
+
+[GPL-3.0](LICENSE)
